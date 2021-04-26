@@ -428,7 +428,7 @@ class pdf extends TcpdfFpdi {
         $ex *= $this->scale;
         $ey *= $this->scale;
 
-        $this->SetLineWidth(3.0 * $this->scale);
+        $this->SetLineWidth(1.0 * $this->scale);
         switch ($type) {
             case 'oval':
                 $rx = abs($sx - $ex) / 2;
