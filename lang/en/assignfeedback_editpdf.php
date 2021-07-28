@@ -109,3 +109,5 @@ $string['draftchangessaved'] = 'Draft annotations saved';
 $string['preparesubmissionsforannotation'] = 'Prepare submissions for annotation';
 $string['rotateleft'] = 'Rotate 90 degrees to the left';
 $string['rotateright'] = 'Rotate 90 degrees to the right';
+$string['limitations'] = 'Limitations';
+$string['largedocs'] = 'Large Documents can be very slow to process <br>Annotations may go missing in PDF documents above ten pages.';

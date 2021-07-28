@@ -619,6 +619,18 @@ class pdf extends TcpdfFpdi {
             // PDF was not valid - try running it through ghostscript to clean it up.
             $pagecount = 0;
         }
+        
+        $outputdevice = "pdfwrite"; // This is our default.
+            
+        // Only if we see less than 10 pages flattening is viable.
+        $maxpages = 10;
+
+        // Check for annotations and force flattening.
+        if ($pagecount <= $maxpages AND $pdf->has_annotations()) {
+            $outputdevice = "pdfimage24";
+            $pagecount = 0;
+        }
+        
         $pdf->Close(); // PDF loaded and never saved/outputted needs to be closed.
 
         if ($pagecount > 0) {
@@ -632,7 +644,7 @@ class pdf extends TcpdfFpdi {
         $gsexec = \escapeshellarg($CFG->pathtogs);
         $tempdstarg = \escapeshellarg($tempdst);
         $tempsrcarg = \escapeshellarg($tempsrc);
-        $command = "$gsexec -q -sDEVICE=pdfwrite -dBATCH -dNOPAUSE -sOutputFile=$tempdstarg $tempsrcarg";
+        $command = "$gsexec -q -sDEVICE=$outputdevice -dBATCH -dNOPAUSE -dPDFSETTINGS=/screen -sOutputFile=$tempdstarg $tempsrcarg";
         exec($command);
         if (!file_exists($tempdst)) {
             // Something has gone wrong in the conversion.
@@ -804,6 +816,16 @@ class pdf extends TcpdfFpdi {
         $this->SetAutoPageBreak(false, 0);
         $this->Image('@' . $imagecontent, 0, 0, $size['w'], $size['h'],
             '', '', '', false, null, '', false, false, 0);
+    }
+    
+    /**
+     * Do we see any annotations in this pdf?
+     * Check to see if PDF has annotations, currently we assume all do.
+     *
+     * @return bool True if we spotted annotations.
+     */
+    public function has_annotations() {
+        return true;        
     }
 }
 
