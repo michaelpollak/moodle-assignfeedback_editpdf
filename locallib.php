@@ -386,17 +386,4 @@ class assign_feedback_editpdf extends assign_feedback_plugin {
     public function get_config_for_external() {
         return (array) $this->get_config();
     }
-    
-    /**
-     * Get the default setting for feedback editpdf plugin
-     * Used to add information about limitations.
-     *
-     * @param MoodleQuickForm $mform The form to add elements to
-     * @return void
-     */
-    public function get_settings(MoodleQuickForm $mform) {
-
-        $mform->addElement('static', 'limitations_editpdf', get_string('limitations', 'assignfeedback_editpdf'), get_string('largedocs', 'assignfeedback_editpdf'));
-        $mform->hideIf('limitations_editpdf', 'assignfeedback_editpdf_enabled', 'notchecked');
-   }
 }

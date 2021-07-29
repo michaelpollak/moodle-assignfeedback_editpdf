@@ -621,12 +621,9 @@ class pdf extends TcpdfFpdi {
         }
         
         $outputdevice = "pdfwrite"; // This is our default.
-            
-        // Only if we see less than 10 pages flattening is viable.
-        $maxpages = 10;
 
         // Check for annotations and force flattening.
-        if ($pagecount <= $maxpages AND $pdf->has_annotations()) {
+        if ($pagecount <= get_config('assignfeedback_editpdf', 'flatten') AND $pdf->has_annotations()) {
             $outputdevice = "pdfimage24";
             $pagecount = 0;
         }

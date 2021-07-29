@@ -406,6 +406,10 @@ ul.assignfeedback_editpdf_menu {
     stroke-width: 1;
 }
 
+.assignfeedback_editpdf_widget * {
+    stroke-width: 1px !important;
+}
+
 @media (max-width: 960px) {
     .assignfeedback_editpdf_widget .pageheader {
         height: 104px;
