@@ -221,10 +221,7 @@ EOD;
                                 $files[$filename] = $pdffile;
                             }
                         }
-                                               
-
-                        
-                        
+        
                         // The file has not been converted to PDF, try to convert it to PDF.
                         if (!isset($files[$filename])
                             && $convertedfile = $converter->start_conversion($file, 'pdf')) {
@@ -1060,7 +1057,6 @@ EOD;
         return $pdffile;
     }
 
-
     /**
      * Convert png file to pdf file
      * @param int|\assign $assignment Assignment
@@ -1112,9 +1108,6 @@ EOD;
        }
        return $pdffile;
    }
-   
-   
-   
    
     /**
      * Save rotated image data to file.
