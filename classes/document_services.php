@@ -58,8 +58,10 @@ class document_services {
     const COMBINED_PDF_FILENAME = 'combined.pdf';
     /**  Temporary place to save JPG Image to PDF file */
     const TMP_JPG_TO_PDF_FILEAREA = 'tmp_jpg_to_pdf';
-    /**  Temporary place to save (Automatically) Rotated JPG FILE */
-    const TMP_ROTATED_JPG_FILEAREA = 'tmp_rotated_jpg';
+    /**  Temporary place to save PNG Image to PDF file */
+    const TMP_PNG_TO_PDF_FILEAREA = 'tmp_png_to_pdf';
+    /**  Temporary place to save (Automatically) Rotated image eg JPG FILE */
+    const TMP_ROTATED_FILEAREA = 'tmp_rotated_image';
     /** Hash of blank pdf */
     const BLANK_PDF_HASH = '4c803c92c71f21b423d13de570c8a09e0a31c718';
 
@@ -209,7 +211,20 @@ EOD;
                                     $files[$filename] = $pdffile;
                                 }
                             }
+                        
+                    } else if ($plugin->allow_image_conversion() && $mimetype === "image/png") {
+                        // no rotation because png do not support EXIF value                        
+                        // Save as PDF file if there is no available converter.
+                        if (!$converter->can_convert_format_to('png', 'pdf')) {
+                            $pdffile = self::save_png_to_pdf($assignment, $userid, $attemptnumber, $file, $size);
+                            if ($pdffile) {
+                                $files[$filename] = $pdffile;
+                            }
                         }
+                                               
+
+                        
+                        
                         // The file has not been converted to PDF, try to convert it to PDF.
                         if (!isset($files[$filename])
                             && $convertedfile = $converter->start_conversion($file, 'pdf')) {
@@ -1045,6 +1060,62 @@ EOD;
         return $pdffile;
     }
 
+
+    /**
+     * Convert png file to pdf file
+     * @param int|\assign $assignment Assignment
+     * @param int $userid User ID
+     * @param int $attemptnumber Attempt Number
+     * @param \stored_file $file file to save
+     * @param null|array $size size of image
+     * @return \stored_file
+     * @throws \file_exception
+     * @throws \stored_file_creation_exception
+     */
+   private static function save_png_to_pdf($assignment, $userid, $attemptnumber, $file, $size=null) {
+       // Temporary file.
+       $filename = $file->get_filename();
+       $tmpdir = make_temp_directory('assignfeedback_editpdf' . DIRECTORY_SEPARATOR
+           . self::TMP_PNG_TO_PDF_FILEAREA . DIRECTORY_SEPARATOR
+           . self::hash($assignment, $userid, $attemptnumber));
+       $tempfile = $tmpdir . DIRECTORY_SEPARATOR . $filename . ".pdf";
+       // Determine orientation.
+       $orientation = 'P';
+       if (!empty($size['width']) && !empty($size['height'])) {
+           if ($size['width'] > $size['height']) {
+               $orientation = 'L';
+           }
+       }
+       // Save PNG image to PDF file.
+       $pdf = new pdf();
+       $pdf->SetHeaderMargin(0);
+       $pdf->SetFooterMargin(0);
+       $pdf->SetMargins(0, 0, 0, true);
+       $pdf->setPrintFooter(false);
+       $pdf->setPrintHeader(false);
+       $pdf->setImageScale(PDF_IMAGE_SCALE_RATIO);
+       $pdf->AddPage($orientation);
+       $pdf->SetAutoPageBreak(false);
+       // Width has to be define here to fit into A4 page. Otherwise the image will be inserted with original size.
+       if ($orientation == 'P') {
+           $pdf->Image('@' . $file->get_content(), 0, 0, 210);
+       } else {
+           $pdf->Image('@' . $file->get_content(), 0, 0, 297);
+       }
+       $pdf->setPageMark();
+       $pdf->save_pdf($tempfile);
+       $filearea = self::TMP_PNG_TO_PDF_FILEAREA;
+       $pdffile = self::save_file($assignment, $userid, $attemptnumber, $filearea, $tempfile);
+       if (file_exists($tempfile)) {
+           unlink($tempfile);
+           rmdir($tmpdir);
+       }
+       return $pdffile;
+   }
+   
+   
+   
+   
     /**
      * Save rotated image data to file.
      * @param int|\assign $assignment Assignment
@@ -1057,7 +1128,7 @@ EOD;
      * @throws \stored_file_creation_exception
      */
     private static function save_rotated_image_file($assignment, $userid, $attemptnumber, $rotateddata, $filename) {
-        $filearea = self::TMP_ROTATED_JPG_FILEAREA;
+        $filearea = self::TMP_ROTATED_FILEAREA;
         $tmpdir = make_temp_directory('assignfeedback_editpdf' . DIRECTORY_SEPARATOR
             . $filearea . DIRECTORY_SEPARATOR
             . self::hash($assignment, $userid, $attemptnumber));
