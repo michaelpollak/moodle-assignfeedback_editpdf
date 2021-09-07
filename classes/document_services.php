@@ -56,11 +56,11 @@ class document_services {
     const STAMPS_FILEAREA = 'stamps';
     /** Filename for combined pdf */
     const COMBINED_PDF_FILENAME = 'combined.pdf';
-    /**  Temporary place to save JPG Image to PDF file */
+    /**  Temporary place to save JPG image to PDF file */
     const TMP_JPG_TO_PDF_FILEAREA = 'tmp_jpg_to_pdf';
-    /**  Temporary place to save PNG Image to PDF file */
-    const TMP_PNG_TO_PDF_FILEAREA = 'tmp_png_to_pdf';
-    /**  Temporary place to save (Automatically) Rotated image eg JPG FILE */
+    /**  Temporary place to save PNG and GIF images to PDF file */
+    const TMP_OTHER_TO_PDF_FILEAREA = 'tmp_other_to_pdf';
+    /**  Temporary place to save (automatically) rotated image eg JPG FILE */
     const TMP_ROTATED_FILEAREA = 'tmp_rotated_image';
     
     /** Hash of blank pdf */
@@ -216,7 +216,15 @@ EOD;
                             // No rotation because png does not support EXIF value.                       
                             // Save as PDF file if there is no available converter.
                             if (!$converter->can_convert_format_to('png', 'pdf')) {
-                                $pdffile = self::save_png_to_pdf($assignment, $userid, $attemptnumber, $file);
+                                $pdffile = self::save_other_to_pdf($assignment, $userid, $attemptnumber, $file);
+                                if ($pdffile) {
+                                    $files[$filename] = $pdffile;
+                                }
+                            }
+                        } else if ($plugin->allow_image_conversion() && $mimetype === "image/gif") {
+                            // Save as PDF file if there is no available converter.
+                            if (!$converter->can_convert_format_to('gif', 'pdf')) {
+                                $pdffile = self::save_other_to_pdf($assignment, $userid, $attemptnumber, $file);
                                 if ($pdffile) {
                                     $files[$filename] = $pdffile;
                                 }
@@ -557,6 +565,7 @@ EOD;
                 if ($pdf = $fs->get_file($contextid, $component, $pdfarea, $itemid, $filepath, $pdfname)) {
                     // The combined pdf may have a different hash if it has been regenerated since the page
                     // image was created. However if this is the case the page image will be stale anyway.
+                    // TODO: Check if this fix is necessary, remove $pagemodified if so.
                     if ($pdf->get_contenthash() == self::BLANK_PDF_HASH || $pagemodified < $pdf->get_timemodified()) {
                         $blankpage = true;
                     }
@@ -1085,7 +1094,7 @@ EOD;
     }
     
     /**
-    * Convert png file to pdf file
+    * Convert png and gif files to pdf file
     * @param int|\assign $assignment Assignment
     * @param int $userid User ID
     * @param int $attemptnumber Attempt Number
@@ -1095,11 +1104,11 @@ EOD;
     * @throws \file_exception
     * @throws \stored_file_creation_exception
     */
-    private static function save_png_to_pdf($assignment, $userid, $attemptnumber, $file, $size=null) {
+    private static function save_other_to_pdf($assignment, $userid, $attemptnumber, $file, $size=null) {
         // Temporary file.
         $filename = $file->get_filename();
         $tmpdir = make_temp_directory('assignfeedback_editpdf' . DIRECTORY_SEPARATOR
-        . self::TMP_PNG_TO_PDF_FILEAREA . DIRECTORY_SEPARATOR
+        . self::TMP_OTHER_TO_PDF_FILEAREA . DIRECTORY_SEPARATOR
         . self::hash($assignment, $userid, $attemptnumber));
         $tempfile = $tmpdir . DIRECTORY_SEPARATOR . $filename . ".pdf";
         // Determine orientation.
@@ -1127,7 +1136,7 @@ EOD;
         }
         $pdf->setPageMark();
         $pdf->save_pdf($tempfile);
-        $filearea = self::TMP_PNG_TO_PDF_FILEAREA;
+        $filearea = self::TMP_OTHER_TO_PDF_FILEAREA;
         $pdffile = self::save_file($assignment, $userid, $attemptnumber, $filearea, $tempfile);
         if (file_exists($tempfile)) {
             unlink($tempfile);
