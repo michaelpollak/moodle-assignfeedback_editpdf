@@ -624,7 +624,7 @@ class pdf extends TcpdfFpdi {
 
         // Check for annotations and force flattening.
         if ($pagecount <= get_config('assignfeedback_editpdf', 'flatten') AND $pdf->has_annotations()) {
-            $outputdevice = "pdfimage24";
+            $outputdevice = "pdfimage24 -sCompression=JPEG -dJPEGQ=60 -r300";
             $pagecount = 0;
         }
         
